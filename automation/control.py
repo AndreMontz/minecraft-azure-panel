@@ -83,6 +83,9 @@ def default_settings() -> dict[str, Any]:
         "onlineMode": False,
         "idleEnabled": True,
         "idleMinutes": 30,
+        "serverName": "Mine-Etec",
+        "customHost": "",
+        "iconBase64": "",
     }
 
 
@@ -219,8 +222,21 @@ def integer(value, default):
         return default
 
 
+def json_file(path, default):
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return default
+
+
+def clean(value):
+    value = re.sub(r"\x1b\[[0-9;]*m", "", value or "")
+    return re.sub(r"§.", "", value)
+
+
 server = properties("/opt/minecraft/server.properties")
 idle = properties("/etc/minecraft/azure-idle.env")
+panel = json_file("/etc/minecraft/panel.json", {})
 service = subprocess.run(
     ["systemctl", "is-active", "minecraft.service"],
     capture_output=True,
@@ -230,6 +246,7 @@ service = subprocess.run(
 players_online = 0
 players_max = integer(server.get("max-players"), 20)
 plugins = []
+online_names = []
 if service == "active":
     listing = subprocess.run(
         ["/usr/local/bin/mc-rcon", "list"],
@@ -237,14 +254,22 @@ if service == "active":
         text=True,
         timeout=15,
     )
+    listing_text = clean(listing.stdout)
     match = re.search(
         r"There are\s+(\d+)\s+of a max of\s+(\d+)\s+players online",
-        listing.stdout,
+        listing_text,
         re.IGNORECASE,
     )
     if match:
         players_online = int(match.group(1))
         players_max = int(match.group(2))
+        remainder = listing_text[match.end():]
+        if ":" in remainder:
+            online_names = [
+                name.strip()
+                for name in remainder.split(":", 1)[1].split(",")
+                if name.strip()
+            ]
 
     plugin_result = subprocess.run(
         ["/usr/local/bin/mc-rcon", "plugins"],
@@ -252,7 +277,7 @@ if service == "active":
         text=True,
         timeout=15,
     )
-    plugin_line = re.sub(r"\x1b\[[0-9;]*m", "", plugin_result.stdout)
+    plugin_line = clean(plugin_result.stdout)
     if ":" in plugin_line:
         plugins = [
             item.strip().lstrip("*")
@@ -260,12 +285,58 @@ if service == "active":
             if item.strip()
         ]
 
+known_names = {}
+for item in json_file("/opt/minecraft/usercache.json", []):
+    if isinstance(item, dict) and item.get("name"):
+        known_names[item["name"].lower()] = item["name"]
+for name in online_names:
+    known_names[name.lower()] = name
+
+ops = {
+    item.get("name", "").lower()
+    for item in json_file("/opt/minecraft/ops.json", [])
+    if isinstance(item, dict)
+}
+whitelisted = {
+    item.get("name", "").lower()
+    for item in json_file("/opt/minecraft/whitelist.json", [])
+    if isinstance(item, dict)
+}
+banned = {
+    item.get("name", "").lower()
+    for item in json_file("/opt/minecraft/banned-players.json", [])
+    if isinstance(item, dict)
+}
+online = {name.lower() for name in online_names}
+for collection in (ops, whitelisted, banned):
+    for name in collection:
+        known_names.setdefault(name, name)
+
+players = [
+    {
+        "name": name,
+        "online": key in online,
+        "op": key in ops,
+        "whitelisted": key in whitelisted,
+        "banned": key in banned,
+    }
+    for key, name in sorted(known_names.items(), key=lambda item: item[1].lower())
+][:100]
+
+icon_base64 = ""
+icon_path = Path("/opt/minecraft/server-icon.png")
+if icon_path.exists() and icon_path.stat().st_size <= 100000:
+    icon_base64 = "data:image/png;base64," + base64.b64encode(
+        icon_path.read_bytes()
+    ).decode("ascii")
+
 result = {
     "server": {
         "service": service,
         "playersOnline": players_online,
         "playersMax": players_max,
         "plugins": plugins,
+        "players": players,
     },
     "settings": {
         "motd": server.get("motd", "Mine-Etec - Java e Bedrock"),
@@ -281,6 +352,9 @@ result = {
         "onlineMode": boolean(server.get("online-mode"), False),
         "idleEnabled": boolean(idle.get("AZURE_IDLE_DEALLOCATE"), True),
         "idleMinutes": integer(idle.get("IDLE_MINUTES"), 30),
+        "serverName": panel.get("serverName", "Mine-Etec"),
+        "customHost": panel.get("customHost", ""),
+        "iconBase64": icon_base64,
     },
 }
 encoded = base64.b64encode(
@@ -319,6 +393,7 @@ def collect_status(state: str | None = None) -> dict[str, Any]:
                 "playersOnline": 0,
                 "playersMax": previous.get("server", {}).get("playersMax", 20),
                 "plugins": previous.get("server", {}).get("plugins", []),
+                "players": previous.get("server", {}).get("players", []),
             },
             "settings": previous.get("settings") or default_settings(),
         }
@@ -338,6 +413,33 @@ def validate_settings(payload: dict[str, Any]) -> dict[str, Any]:
 
     result = dict(payload)
     result["motd"] = str(result["motd"]).replace("\r", " ").replace("\n", " ")[:100]
+    result["serverName"] = (
+        str(result["serverName"]).replace("\r", " ").replace("\n", " ").strip()[:40]
+    )
+    if not result["serverName"]:
+        raise ValueError("O nome do servidor não pode ficar vazio.")
+
+    result["customHost"] = str(result["customHost"]).strip().lower().rstrip(".")
+    if result["customHost"]:
+        if len(result["customHost"]) > 253 or not re.fullmatch(
+            r"(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+"
+            r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?",
+            result["customHost"],
+        ):
+            raise ValueError("O domínio personalizado é inválido.")
+
+    icon_value = str(result["iconBase64"])
+    if icon_value:
+        prefix = "data:image/png;base64,"
+        if not icon_value.startswith(prefix):
+            raise ValueError("O ícone precisa ser uma imagem PNG.")
+        try:
+            icon_bytes = base64.b64decode(icon_value[len(prefix):], validate=True)
+        except ValueError as error:
+            raise ValueError("Os dados do ícone são inválidos.") from error
+        if not icon_bytes.startswith(b"\x89PNG\r\n\x1a\n") or len(icon_bytes) > 100000:
+            raise ValueError("O ícone PNG é inválido ou muito grande.")
+
     if result["gamemode"] not in {"survival", "creative", "adventure", "spectator"}:
         raise ValueError("Modo de jogo inválido.")
     if result["difficulty"] not in {"peaceful", "easy", "normal", "hard"}:
@@ -389,6 +491,8 @@ from pathlib import Path
 settings = json.loads(base64.b64decode("{encoded}").decode("utf-8"))
 properties_path = Path("/opt/minecraft/server.properties")
 idle_path = Path("/etc/minecraft/azure-idle.env")
+panel_path = Path("/etc/minecraft/panel.json")
+icon_path = Path("/opt/minecraft/server-icon.png")
 
 updates = {{
     "motd": settings["motd"],
@@ -430,6 +534,33 @@ os.chown(
 )
 os.chmod(temporary, 0o600)
 temporary.replace(properties_path)
+
+panel_path.parent.mkdir(parents=True, exist_ok=True)
+panel_path.write_text(
+    json.dumps(
+        {{
+            "serverName": settings["serverName"],
+            "customHost": settings["customHost"],
+        }},
+        ensure_ascii=False,
+        indent=2,
+    )
+    + "\n",
+    encoding="utf-8",
+)
+os.chmod(panel_path, 0o644)
+
+if settings["iconBase64"]:
+    icon_data = base64.b64decode(settings["iconBase64"].split(",", 1)[1])
+    icon_path.write_bytes(icon_data)
+    os.chown(
+        icon_path,
+        pwd.getpwnam("minecraft").pw_uid,
+        grp.getgrnam("minecraft").gr_gid,
+    )
+    os.chmod(icon_path, 0o644)
+else:
+    icon_path.unlink(missing_ok=True)
 
 idle_path.write_text(
     "AZURE_IDLE_DEALLOCATE="
@@ -489,6 +620,55 @@ PY
 """
     result = marker_result(invoke(script))
     return str(result["message"])[:1000]
+
+
+def player_token(value: Any, label: str, maximum: int = 32) -> str:
+    text = str(value or "").strip()
+    if not text or len(text) > maximum or not re.fullmatch(r"[A-Za-z0-9_.-]+", text):
+        raise ValueError(f"{label} inválido.")
+    return text
+
+
+def player_action(payload: dict[str, Any]) -> str:
+    action = str(payload.get("playerAction", "")).strip().lower()
+    player = player_token(payload.get("player"), "Nome do jogador")
+    commands = {
+        "op": f"op {player}",
+        "deop": f"deop {player}",
+        "whitelist-add": f"whitelist add {player}",
+        "whitelist-remove": f"whitelist remove {player}",
+        "pardon": f"pardon {player}",
+        "skin-clear": f"skin clear {player}",
+    }
+
+    if action in commands:
+        return execute_command(commands[action])
+
+    if action == "gamemode":
+        gamemode = str(payload.get("gamemode", "")).strip().lower()
+        if gamemode not in {"survival", "creative", "adventure", "spectator"}:
+            raise ValueError("Modo de jogo inválido.")
+        return execute_command(f"gamemode {gamemode} {player}")
+
+    if action == "skin-set":
+        skin = player_token(payload.get("skin"), "Nome da skin")
+        return execute_command(f"skin set {skin} {player}")
+
+    if action in {"kick", "ban"}:
+        reason = (
+            str(payload.get("reason", ""))
+            .replace("\r", " ")
+            .replace("\n", " ")
+            .strip()[:80]
+        )
+        if reason and not re.fullmatch(r"[\wÀ-ÿ .,!?:;()'/-]+", reason):
+            raise ValueError("O motivo contém caracteres inválidos.")
+        command = f"{action} {player}"
+        if reason:
+            command += f" {reason}"
+        return execute_command(command)
+
+    raise ValueError("Ação de jogador não permitida.")
 
 
 def perform() -> tuple[dict[str, Any], str]:
@@ -558,7 +738,10 @@ def perform() -> tuple[dict[str, Any], str]:
         return collect_status("running"), "Configurações salvas e Paper reiniciado."
 
     if OPERATION == "command":
-        message = execute_command(str(payload.get("command", "")).lstrip("/"))
+        if payload.get("playerAction"):
+            message = player_action(payload)
+        else:
+            message = execute_command(str(payload.get("command", "")).lstrip("/"))
         return collect_status("running"), message
 
     if OPERATION == "backup":
