@@ -25,6 +25,12 @@
         <button class="nav-item" data-page="options">
           <span class="nav-icon">⚙</span> Opções
         </button>
+        <button class="nav-item" data-page="identity">
+          <span class="nav-icon">◇</span> Personalização
+        </button>
+        <button class="nav-item" data-page="players">
+          <span class="nav-icon">♙</span> Jogadores
+        </button>
         <button class="nav-item" data-page="console">
           <span class="nav-icon">›_</span> Console
         </button>
@@ -67,14 +73,15 @@
             <div class="block block-2"></div>
             <div class="block block-3"></div>
             <div class="block block-4"></div>
-            <span class="server-letter">M</span>
+            <img class="server-icon-image hidden" id="server-icon-image" alt="Ícone do servidor">
+            <span class="server-letter" id="server-letter">M</span>
           </div>
           <div class="hero-content">
             <div class="status-line">
               <span class="status-pill status-unknown" id="status-pill">DESCONHECIDO</span>
               <span id="service-status">Aguardando consulta</span>
             </div>
-            <h2>Mine-Etec</h2>
+            <h2 id="server-name">Mine-Etec</h2>
             <button class="address" id="copy-java-address" title="Copiar endereço Java">
               <span id="java-address">4.228.64.209:25565</span>
               <span aria-hidden="true">▢</span>
@@ -146,6 +153,124 @@
             <div class="activity-icon" id="activity-icon">✓</div>
             <strong id="last-action">Nenhuma ação registrada</strong>
             <p id="last-message">Conecte o GitHub para controlar a VM.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="page-identity">
+        <form class="panel options-form" id="identity-form">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">IDENTIDADE DO SERVIDOR</p>
+              <h3>Nome, endereço e imagem</h3>
+            </div>
+            <button class="primary-button" type="submit">Salvar personalização</button>
+          </div>
+
+          <div class="identity-grid">
+            <div class="icon-editor">
+              <div class="icon-preview" id="icon-preview">
+                <img class="hidden" id="icon-preview-image" alt="Prévia do ícone">
+                <strong id="icon-preview-letter">M</strong>
+              </div>
+              <div class="button-row compact-buttons">
+                <label class="secondary-button upload-button">
+                  Escolher imagem
+                  <input type="file" id="icon-file" accept="image/png,image/jpeg,image/webp">
+                </label>
+                <button class="small-button" type="button" id="remove-icon-button">Remover</button>
+              </div>
+              <small>PNG, JPG ou WebP. O painel recorta e converte para PNG 64×64.</small>
+            </div>
+
+            <div class="form-grid identity-fields">
+              <label class="field field-wide">
+                <span>Nome exibido no painel</span>
+                <input type="text" name="serverName" maxlength="40" value="Mine-Etec">
+              </label>
+              <label class="field field-wide">
+                <span>Domínio personalizado</span>
+                <input type="text" name="customHost" maxlength="253" placeholder="jogar.seudominio.com">
+                <small>Crie um registro DNS tipo A apontando para o IP público da Azure. Deixe vazio para usar o IP.</small>
+              </label>
+              <div class="dns-guide field-wide">
+                <strong>Configuração no provedor do domínio</strong>
+                <code>Tipo A · Nome jogar · Valor <span id="dns-ip">4.228.64.209</span></code>
+                <p>Java usa a porta 25565 e Bedrock usa 19132. O domínio não altera essas portas.</p>
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="page" id="page-players">
+        <div class="players-layout">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">JOGADORES CONHECIDOS</p>
+                <h3>Selecionar jogador</h3>
+              </div>
+              <button class="small-button" type="button" id="refresh-players-button">Atualizar</button>
+            </div>
+            <div class="player-list" id="player-list">
+              <p class="empty-state">Atualize o status para carregar os jogadores.</p>
+            </div>
+          </article>
+
+          <article class="panel player-editor">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">ADMINISTRAÇÃO</p>
+                <h3 id="selected-player-title">Nenhum jogador selecionado</h3>
+              </div>
+              <span class="status-pill status-unknown" id="selected-player-status">OFFLINE</span>
+            </div>
+
+            <input type="hidden" id="selected-player-name">
+
+            <div class="player-action-section">
+              <h4>Acesso e permissões</h4>
+              <div class="button-row compact-buttons">
+                <button class="secondary-button player-action-button" data-player-action="op">Dar OP</button>
+                <button class="secondary-button player-action-button" data-player-action="deop">Remover OP</button>
+                <button class="secondary-button player-action-button" data-player-action="whitelist-add">Adicionar à whitelist</button>
+                <button class="secondary-button player-action-button" data-player-action="whitelist-remove">Remover da whitelist</button>
+              </div>
+            </div>
+
+            <form class="player-action-section inline-action-form" id="gamemode-form">
+              <h4>Modo de jogo</h4>
+              <div class="inline-fields">
+                <select id="player-gamemode">
+                  <option value="survival">Sobrevivência</option>
+                  <option value="creative">Criativo</option>
+                  <option value="adventure">Aventura</option>
+                  <option value="spectator">Espectador</option>
+                </select>
+                <button class="primary-button" type="submit">Aplicar</button>
+              </div>
+              <small>O jogador precisa estar online.</small>
+            </form>
+
+            <form class="player-action-section inline-action-form" id="skin-form">
+              <h4>Skin individual</h4>
+              <div class="inline-fields">
+                <input type="text" id="skin-name" maxlength="32" placeholder="Nome da skin ou jogador">
+                <button class="primary-button" type="submit">Definir skin</button>
+                <button class="secondary-button" type="button" id="clear-skin-button">Limpar</button>
+              </div>
+            </form>
+
+            <form class="player-action-section inline-action-form danger-zone" id="moderation-form">
+              <h4>Moderação</h4>
+              <input type="text" id="moderation-reason" maxlength="80" placeholder="Motivo opcional">
+              <div class="button-row compact-buttons">
+                <button class="secondary-button" type="submit" data-moderation-action="kick">Expulsar</button>
+                <button class="danger-button" type="submit" data-moderation-action="ban">Banir</button>
+                <button class="secondary-button" type="submit" data-moderation-action="pardon">Desbanir</button>
+              </div>
+            </form>
           </article>
         </div>
       </section>
