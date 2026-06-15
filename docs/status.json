@@ -1,11 +1,11 @@
 {
   "vm": {
-    "state": "deallocated",
+    "state": "running",
     "publicIp": ""
   },
   "server": {
-    "service": "inactive",
-    "playersOnline": 0,
+    "service": "active",
+    "playersOnline": 2,
     "playersMax": 20,
     "plugins": [
       "§x§e§d§8§1§0§6Bukkit Plugins:\n §8- §afloodgate§r",
@@ -30,9 +30,9 @@
     "idleEnabled": true,
     "idleMinutes": 30
   },
-  "requestId": "789b2589-5756-430b-9528-e08ce1b7310c",
-  "updatedAt": "2026-06-15T01:57:46.585664+00:00",
-  "operation": "stop",
+  "requestId": "0c1da644-a47a-47db-b8ce-244118996b91",
+  "updatedAt": "2026-06-15T02:06:07.463670+00:00",
+  "operation": "start",
   "success": true,
-  "message": "Backup concluído e VM desalocada."
+  "message": "VM iniciada e Paper pronto para jogadores."
 }
