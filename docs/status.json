@@ -1,11 +1,11 @@
 {
   "vm": {
-    "state": "running",
+    "state": "deallocated",
     "publicIp": ""
   },
   "server": {
-    "service": "active",
-    "playersOnline": 3,
+    "service": "inactive",
+    "playersOnline": 0,
     "playersMax": 20,
     "plugins": [
       "§x§e§d§8§1§0§6Bukkit Plugins:\n §8- §afloodgate§r",
@@ -30,9 +30,9 @@
     "idleEnabled": true,
     "idleMinutes": 30
   },
-  "requestId": "8892628a-0690-4496-87a7-7e27269aff67",
-  "updatedAt": "2026-06-15T01:51:41.110992+00:00",
-  "operation": "status",
+  "requestId": "789b2589-5756-430b-9528-e08ce1b7310c",
+  "updatedAt": "2026-06-15T01:57:46.585664+00:00",
+  "operation": "stop",
   "success": true,
-  "message": "Status atualizado."
+  "message": "Backup concluído e VM desalocada."
 }
