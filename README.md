@@ -7,6 +7,9 @@ Minecraft sem expor chave SSH:
 - Criar backup, parar o Paper e desalocar a VM.
 - Reiniciar o Paper.
 - Consultar jogadores e estado do serviço.
+- Definir o ícone de 64 x 64 mostrado na lista de servidores do Minecraft.
+- Usar um domínio amigável para os endereços Java e Bedrock.
+- Administrar OP, whitelist, modo de jogo, skins, expulsões e banimentos por jogador.
 - Editar opções essenciais do `server.properties`.
 - Ativar ou desativar o desligamento automático.
 - Enviar comandos pelo RCON local.
@@ -105,6 +108,14 @@ repositório e criar seu próprio token.
 - **Parar e desalocar** interrompe a cobrança de computação, mas disco e IP
   público ainda podem gerar custo.
 - O IP exibido é consultado na Azure após cada operação.
+- O IP público numérico pertence à Azure e não pode ser escolhido livremente.
+  Para usar um endereço como `jogar.seudominio.com`, crie no provedor do
+  domínio um registro DNS `A` apontando para o IP mostrado pelo painel.
+- A imagem enviada em **Personalização** é recortada para 64 x 64 e instalada
+  como `/opt/minecraft/server-icon.png`, usada pelo Minecraft na lista de
+  servidores.
+- A seção **Jogadores** usa os arquivos do Paper e comandos locais. A troca de
+  skin exige que o SkinsRestorer esteja carregado.
 - O console aceita comandos sem `/` e passa pelo RCON local da VM.
 - Não abra a porta RCON `25575` na internet.
 
