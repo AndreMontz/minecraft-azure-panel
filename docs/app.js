@@ -8,7 +8,10 @@
     token: sessionStorage.getItem("panel.token") || "",
     user: null,
     busy: false,
-    status: null
+    status: null,
+    pendingIconBase64: "",
+    iconDirty: false,
+    selectedPlayer: ""
   };
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -16,6 +19,8 @@
 
   const pages = {
     server: "Servidor",
+    identity: "Personalização",
+    players: "Jogadores",
     options: "Opções",
     console: "Console",
     backups: "Backups",
@@ -50,7 +55,11 @@
 
   function setBusy(busy, message = "") {
     state.busy = busy;
-    $$(".action-button, #options-form button[type=submit], #console-form button").forEach((button) => {
+    $$(
+      ".action-button, #identity-form button, #options-form button[type=submit], "
+      + "#console-form button, .player-action-button, #gamemode-form button, "
+      + "#skin-form button, #moderation-form button"
+    ).forEach((button) => {
       button.disabled = busy || !state.token;
     });
     $("#refresh-button").disabled = busy;
@@ -85,11 +94,123 @@
   }
 
   function renderAddresses(address = config.serverAddress || "4.228.64.209") {
-    const java = serverAddress(config.javaPort || 25565, address);
-    const bedrock = serverAddress(config.bedrockPort || 19132, address);
+    const publicIp = address || config.serverAddress || "4.228.64.209";
+    const host = state.status?.settings?.customHost || publicIp;
+    const java = serverAddress(config.javaPort || 25565, host);
+    const bedrock = serverAddress(config.bedrockPort || 19132, host);
     $("#java-address").textContent = java;
     $("#java-address-card").textContent = java;
     $("#bedrock-address-card").textContent = bedrock;
+    const dnsIp = $("#dns-ip");
+    if (dnsIp) dnsIp.textContent = publicIp;
+  }
+
+  function setServerIcon(dataUrl, name) {
+    const fallback = String(name || "M").trim().charAt(0).toUpperCase() || "M";
+    ["#server-icon-image", "#icon-preview-image"].forEach((selector) => {
+      const image = $(selector);
+      image.src = dataUrl || "";
+      image.classList.toggle("hidden", !dataUrl);
+    });
+    ["#server-letter", "#icon-preview-letter"].forEach((selector) => {
+      const letter = $(selector);
+      letter.textContent = fallback;
+      letter.classList.toggle("hidden", Boolean(dataUrl));
+    });
+  }
+
+  function renderIdentity(settings) {
+    const name = settings.serverName || "Mine-Etec";
+    if (!state.iconDirty) {
+      state.pendingIconBase64 = settings.iconBase64 || "";
+    }
+
+    $("#server-name").textContent = name;
+    $(".brand strong").textContent = name;
+    const form = $("#identity-form");
+    form.elements.serverName.value = name;
+    form.elements.customHost.value = settings.customHost || "";
+    setServerIcon(state.pendingIconBase64, name);
+  }
+
+  function miniBadge(label, kind = "") {
+    const badge = document.createElement("span");
+    badge.className = `mini-badge ${kind}`.trim();
+    badge.textContent = label;
+    return badge;
+  }
+
+  function renderSelectedPlayer(player) {
+    const title = $("#selected-player-title");
+    const status = $("#selected-player-status");
+    const hasPlayer = Boolean(player);
+
+    title.textContent = hasPlayer ? player.name : "Nenhum jogador selecionado";
+    $("#selected-player-name").value = hasPlayer ? player.name : "";
+    status.className = "status-pill";
+    status.classList.add(hasPlayer && player.online ? "status-running" : "status-unknown");
+    status.textContent = hasPlayer && player.online ? "ONLINE" : "OFFLINE";
+
+    $$(".player-action-button, #gamemode-form button, #skin-form button, #moderation-form button")
+      .forEach((button) => {
+        button.disabled = state.busy || !state.token || !hasPlayer;
+      });
+  }
+
+  function selectPlayer(name) {
+    state.selectedPlayer = name;
+    const players = state.status?.server?.players || [];
+    const player = players.find((item) => item.name === name);
+    $$(".player-item").forEach((item) => {
+      item.classList.toggle("is-selected", item.dataset.player === name);
+    });
+    renderSelectedPlayer(player);
+  }
+
+  function renderPlayers(players) {
+    const list = $("#player-list");
+    list.replaceChildren();
+
+    if (!players.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = "Nenhum jogador conhecido ainda.";
+      list.append(empty);
+      renderSelectedPlayer(null);
+      return;
+    }
+
+    players.forEach((player) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "player-item";
+      button.dataset.player = player.name;
+
+      const avatar = document.createElement("span");
+      avatar.className = "player-avatar";
+      avatar.textContent = player.name.charAt(0).toUpperCase();
+
+      const info = document.createElement("span");
+      info.className = "player-item-info";
+      const name = document.createElement("strong");
+      name.textContent = player.name;
+      const badges = document.createElement("span");
+      badges.className = "player-badges";
+      badges.append(miniBadge(player.online ? "Online" : "Offline", player.online ? "online" : ""));
+      if (player.op) badges.append(miniBadge("OP"));
+      if (player.whitelisted) badges.append(miniBadge("Whitelist"));
+      if (player.banned) badges.append(miniBadge("Banido"));
+      info.append(name, badges);
+
+      button.append(avatar, info);
+      button.addEventListener("click", () => selectPlayer(player.name));
+      list.append(button);
+    });
+
+    const selected = players.some((player) => player.name === state.selectedPlayer)
+      ? state.selectedPlayer
+      : players[0].name;
+    selectPlayer(selected);
   }
 
   function renderStatus(status) {
@@ -137,6 +258,8 @@
       ? `Atualizado ${new Date(status.updatedAt).toLocaleString("pt-BR")}`
       : "Sem atualização";
 
+    renderIdentity(status?.settings || {});
+    renderPlayers(status?.server?.players || []);
     fillOptions(status?.settings || {});
   }
 
@@ -317,6 +440,7 @@
 
   function optionsPayload() {
     const form = $("#options-form");
+    const identityForm = $("#identity-form");
     const data = new FormData(form);
     return {
       motd: String(data.get("motd") || ""),
@@ -331,7 +455,10 @@
       whitelist: form.elements.whitelist.checked,
       onlineMode: form.elements.onlineMode.checked,
       idleEnabled: form.elements.idleEnabled.checked,
-      idleMinutes: Number(data.get("idleMinutes"))
+      idleMinutes: Number(data.get("idleMinutes")),
+      serverName: identityForm.elements.serverName.value.trim(),
+      customHost: identityForm.elements.customHost.value.trim(),
+      iconBase64: state.pendingIconBase64
     };
   }
 
@@ -391,6 +518,48 @@
   }
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  async function imageToServerIcon(file) {
+    if (!file.type.startsWith("image/")) {
+      throw new Error("Escolha uma imagem PNG, JPG ou WebP.");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error("A imagem deve ter no máximo 5 MB.");
+    }
+
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext("2d");
+    const size = Math.min(bitmap.width, bitmap.height);
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(
+      bitmap,
+      (bitmap.width - size) / 2,
+      (bitmap.height - size) / 2,
+      size,
+      size,
+      0,
+      0,
+      64,
+      64
+    );
+    bitmap.close();
+    return canvas.toDataURL("image/png");
+  }
+
+  async function runPlayerAction(playerAction, extra = {}) {
+    if (!state.selectedPlayer) {
+      throw new Error("Selecione um jogador.");
+    }
+    await dispatch("command", {
+      playerAction,
+      player: state.selectedPlayer,
+      ...extra
+    });
+  }
 
   function bindEvents() {
     $$(".nav-item").forEach((button) => button.addEventListener("click", () => switchPage(button.dataset.page)));
@@ -463,6 +632,104 @@
         await dispatch("apply", payload);
       } catch (error) {
         showNotice(error.message, "error");
+      }
+    });
+
+    $("#identity-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        const payload = optionsPayload();
+        const warning = validateOptions(payload);
+        if (warning && !(await confirmAction("Confirmar configuração", warning))) return;
+        await dispatch("apply", payload);
+        state.iconDirty = false;
+      } catch (error) {
+        showNotice(error.message, "error");
+      }
+    });
+
+    $("#icon-file").addEventListener("change", async (event) => {
+      const [file] = event.target.files;
+      if (!file) return;
+      try {
+        state.pendingIconBase64 = await imageToServerIcon(file);
+        state.iconDirty = true;
+        setServerIcon(
+          state.pendingIconBase64,
+          $("#identity-form").elements.serverName.value
+        );
+        showNotice("Imagem pronta. Clique em Salvar personalização.", "success");
+      } catch (error) {
+        showNotice(error.message, "error");
+      } finally {
+        event.target.value = "";
+      }
+    });
+
+    $("#remove-icon-button").addEventListener("click", () => {
+      state.pendingIconBase64 = "";
+      state.iconDirty = true;
+      setServerIcon("", $("#identity-form").elements.serverName.value);
+    });
+
+    $("#identity-form").elements.serverName.addEventListener("input", (event) => {
+      setServerIcon(state.pendingIconBase64, event.target.value);
+    });
+
+    $$(".player-action-button").forEach((button) => {
+      button.addEventListener("click", async () => {
+        try {
+          await runPlayerAction(button.dataset.playerAction);
+        } catch (error) {
+          showNotice(error.message, "error");
+        }
+      });
+    });
+
+    $("#gamemode-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        await runPlayerAction("gamemode", { gamemode: $("#player-gamemode").value });
+      } catch (error) {
+        showNotice(error.message, "error");
+      }
+    });
+
+    $("#skin-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        const skin = $("#skin-name").value.trim();
+        if (!skin) throw new Error("Informe o nome da skin.");
+        await runPlayerAction("skin-set", { skin });
+      } catch (error) {
+        showNotice(error.message, "error");
+      }
+    });
+
+    $("#clear-skin-button").addEventListener("click", async () => {
+      try {
+        await runPlayerAction("skin-clear");
+      } catch (error) {
+        showNotice(error.message, "error");
+      }
+    });
+
+    $("#moderation-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        const action = event.submitter?.dataset.moderationAction;
+        if (!action) return;
+        await runPlayerAction(action, { reason: $("#moderation-reason").value.trim() });
+      } catch (error) {
+        showNotice(error.message, "error");
+      }
+    });
+
+    $("#refresh-players-button").addEventListener("click", async () => {
+      if (state.token) {
+        await dispatch("status");
+      } else {
+        await refreshStatus();
       }
     });
 
