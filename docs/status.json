@@ -5,14 +5,65 @@
   },
   "server": {
     "service": "active",
-    "playersOnline": 2,
+    "playersOnline": 5,
     "playersMax": 20,
     "plugins": [
-      "§x§e§d§8§1§0§6Bukkit Plugins:\n §8- §afloodgate§r",
-      "§aGeyser-Spigot§r",
-      "§aSkinsRestorer§r",
-      "§aViaBackwards§r",
-      "§aViaVersion"
+      "Bukkit Plugins:\n - floodgate",
+      "Geyser-Spigot",
+      "SkinsRestorer",
+      "ViaBackwards",
+      "ViaVersion"
+    ],
+    "players": [
+      {
+        "name": ".andrezinX360",
+        "online": false,
+        "op": false,
+        "whitelisted": false,
+        "banned": false
+      },
+      {
+        "name": "andremontz",
+        "online": true,
+        "op": false,
+        "whitelisted": false,
+        "banned": false
+      },
+      {
+        "name": "danezudo",
+        "online": true,
+        "op": false,
+        "whitelisted": false,
+        "banned": false
+      },
+      {
+        "name": "drozada",
+        "online": true,
+        "op": false,
+        "whitelisted": false,
+        "banned": false
+      },
+      {
+        "name": "neymarnetojr",
+        "online": false,
+        "op": false,
+        "whitelisted": false,
+        "banned": false
+      },
+      {
+        "name": "tragedie",
+        "online": true,
+        "op": false,
+        "whitelisted": false,
+        "banned": false
+      },
+      {
+        "name": "zelecogames",
+        "online": true,
+        "op": false,
+        "whitelisted": false,
+        "banned": false
+      }
     ]
   },
   "settings": {
@@ -28,11 +79,14 @@
     "whitelist": false,
     "onlineMode": false,
     "idleEnabled": true,
-    "idleMinutes": 30
+    "idleMinutes": 30,
+    "serverName": "Mine-Etec",
+    "customHost": "",
+    "iconBase64": ""
   },
-  "requestId": "0c1da644-a47a-47db-b8ce-244118996b91",
-  "updatedAt": "2026-06-15T02:06:07.463670+00:00",
-  "operation": "start",
+  "requestId": "dec8f483-0349-48b8-aa3c-3af391ebace9",
+  "updatedAt": "2026-06-15T02:23:38.528535+00:00",
+  "operation": "status",
   "success": true,
-  "message": "VM iniciada e Paper pronto para jogadores."
+  "message": "Status atualizado."
 }
