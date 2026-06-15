@@ -1,21 +1,22 @@
 {
-  "requestId": "",
-  "updatedAt": null,
-  "operation": "none",
-  "success": true,
-  "message": "Painel publicado. Conecte o GitHub e atualize o status.",
   "vm": {
-    "state": "unknown",
-    "publicIp": "4.228.64.209"
+    "state": "running",
+    "publicIp": ""
   },
   "server": {
-    "service": "unknown",
-    "playersOnline": 0,
+    "service": "active",
+    "playersOnline": 3,
     "playersMax": 20,
-    "plugins": []
+    "plugins": [
+      "§x§e§d§8§1§0§6Bukkit Plugins:\n §8- §afloodgate§r",
+      "§aGeyser-Spigot§r",
+      "§aSkinsRestorer§r",
+      "§aViaBackwards§r",
+      "§aViaVersion"
+    ]
   },
   "settings": {
-    "motd": "Mine-Etec - Java e Bedrock",
+    "motd": "Minecraft 26.1.2 - Java e Bedrock",
     "gamemode": "survival",
     "difficulty": "normal",
     "maxPlayers": 20,
@@ -28,5 +29,10 @@
     "onlineMode": false,
     "idleEnabled": true,
     "idleMinutes": 30
-  }
+  },
+  "requestId": "teste-status-1",
+  "updatedAt": "2026-06-15T01:43:32.759561+00:00",
+  "operation": "status",
+  "success": true,
+  "message": "Status atualizado."
 }
