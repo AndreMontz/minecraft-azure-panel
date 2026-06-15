@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1e2630">
+  <title>Mine-Etec | Painel do servidor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#server" aria-label="Painel Mine-Etec">
+        <span class="brand-mark" aria-hidden="true">M</span>
+        <span>
+          <strong>Mine-Etec</strong>
+          <small>server panel</small>
+        </span>
+      </a>
+
+      <nav class="nav" aria-label="Navegação principal">
+        <button class="nav-item is-active" data-page="server">
+          <span class="nav-icon">▣</span> Servidor
+        </button>
+        <button class="nav-item" data-page="options">
+          <span class="nav-icon">⚙</span> Opções
+        </button>
+        <button class="nav-item" data-page="console">
+          <span class="nav-icon">›_</span> Console
+        </button>
+        <button class="nav-item" data-page="backups">
+          <span class="nav-icon">↻</span> Backups
+        </button>
+        <button class="nav-item" data-page="access">
+          <span class="nav-icon">⌁</span> Acesso
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="github-state" id="github-state">
+          <span class="dot dot-off"></span>
+          <span>GitHub desconectado</span>
+        </div>
+        <button class="secondary-button full" id="connect-button">Conectar GitHub</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-button" id="menu-button" aria-label="Abrir menu">☰</button>
+        <div>
+          <p class="eyebrow">MINECRAFT 26.1.2</p>
+          <h1 id="page-title">Servidor</h1>
+        </div>
+        <div class="topbar-actions">
+          <span class="last-update" id="last-update">Sem atualização</span>
+          <button class="icon-button" id="refresh-button" title="Atualizar status">↻</button>
+        </div>
+      </header>
+
+      <div class="notice hidden" id="notice" role="status"></div>
+
+      <section class="page is-active" id="page-server">
+        <div class="hero-card">
+          <div class="server-art" aria-hidden="true">
+            <div class="block block-1"></div>
+            <div class="block block-2"></div>
+            <div class="block block-3"></div>
+            <div class="block block-4"></div>
+            <span class="server-letter">M</span>
+          </div>
+          <div class="hero-content">
+            <div class="status-line">
+              <span class="status-pill status-unknown" id="status-pill">DESCONHECIDO</span>
+              <span id="service-status">Aguardando consulta</span>
+            </div>
+            <h2>Mine-Etec</h2>
+            <button class="address" id="copy-java-address" title="Copiar endereço Java">
+              <span id="java-address">4.228.64.209:25565</span>
+              <span aria-hidden="true">▢</span>
+            </button>
+            <p class="server-subtitle">Paper, Java + Bedrock no mesmo mundo</p>
+
+            <div class="server-actions">
+              <button class="primary-button action-button" data-action="start">Iniciar</button>
+              <button class="danger-button action-button" data-action="stop">Parar e desalocar</button>
+              <button class="secondary-button action-button" data-action="restart">Reiniciar Paper</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <article class="stat-card">
+            <span class="stat-label">Jogadores</span>
+            <strong><span id="players-online">0</span>/<span id="players-max">20</span></strong>
+            <span class="stat-detail">online agora</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Máquina virtual</span>
+            <strong id="vm-state">Desconhecido</strong>
+            <span class="stat-detail">Azure Brazil South</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Distância</span>
+            <strong><span id="view-distance">16</span> chunks</strong>
+            <span class="stat-detail">simulação: <span id="simulation-distance">6</span></span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Desligamento</span>
+            <strong id="idle-state">30 min</strong>
+            <span class="stat-detail">quando vazio</span>
+          </article>
+        </div>
+
+        <div class="content-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">CONEXÃO</p>
+                <h3>Endereços do servidor</h3>
+              </div>
+            </div>
+            <div class="connection-row">
+              <div>
+                <span>Java Edition</span>
+                <strong id="java-address-card">4.228.64.209:25565</strong>
+              </div>
+              <button class="small-button" data-copy-target="java-address-card">Copiar</button>
+            </div>
+            <div class="connection-row">
+              <div>
+                <span>Bedrock Edition</span>
+                <strong id="bedrock-address-card">4.228.64.209:19132</strong>
+              </div>
+              <button class="small-button" data-copy-target="bedrock-address-card">Copiar</button>
+            </div>
+          </article>
+
+          <article class="panel activity-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">ATIVIDADE</p>
+                <h3>Última operação</h3>
+              </div>
+            </div>
+            <div class="activity-icon" id="activity-icon">✓</div>
+            <strong id="last-action">Nenhuma ação registrada</strong>
+            <p id="last-message">Conecte o GitHub para controlar a VM.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="page-options">
+        <form class="panel options-form" id="options-form">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">SERVER.PROPERTIES</p>
+              <h3>Configurações do jogo</h3>
+            </div>
+            <button class="primary-button" type="submit">Salvar e reiniciar</button>
+          </div>
+
+          <div class="form-grid">
+            <label class="field field-wide">
+              <span>Mensagem do servidor</span>
+              <input type="text" name="motd" maxlength="100" value="Mine-Etec - Java e Bedrock">
+            </label>
+
+            <label class="field">
+              <span>Modo de jogo</span>
+              <select name="gamemode">
+                <option value="survival">Sobrevivência</option>
+                <option value="creative">Criativo</option>
+                <option value="adventure">Aventura</option>
+                <option value="spectator">Espectador</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Dificuldade</span>
+              <select name="difficulty">
+                <option value="peaceful">Pacífico</option>
+                <option value="easy">Fácil</option>
+                <option value="normal">Normal</option>
+                <option value="hard">Difícil</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Máximo de jogadores</span>
+              <input type="number" name="maxPlayers" min="1" max="100" value="20">
+            </label>
+
+            <label class="field">
+              <span>Proteção do spawn</span>
+              <input type="number" name="spawnProtection" min="0" max="64" value="16">
+            </label>
+
+            <label class="field">
+              <span>Chunks visíveis</span>
+              <input type="number" name="viewDistance" min="2" max="32" value="16">
+              <small>Para 2 vCPUs, 16 já é uma configuração pesada.</small>
+            </label>
+
+            <label class="field">
+              <span>Chunks de simulação</span>
+              <input type="number" name="simulationDistance" min="2" max="16" value="6">
+            </label>
+          </div>
+
+          <div class="toggle-list">
+            <label class="toggle-row">
+              <span><strong>PvP</strong><small>Permitir combate entre jogadores</small></span>
+              <input type="checkbox" name="pvp" checked>
+              <i></i>
+            </label>
+            <label class="toggle-row">
+              <span><strong>Blocos de comando</strong><small>Ativar command blocks</small></span>
+              <input type="checkbox" name="commandBlocks">
+              <i></i>
+            </label>
+            <label class="toggle-row">
+              <span><strong>Whitelist</strong><small>Restringir entrada a jogadores cadastrados</small></span>
+              <input type="checkbox" name="whitelist">
+              <i></i>
+            </label>
+            <label class="toggle-row warning-toggle">
+              <span><strong>Verificação oficial</strong><small>Desative para launchers não oficiais</small></span>
+              <input type="checkbox" name="onlineMode">
+              <i></i>
+            </label>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="panel-heading compact">
+            <div>
+              <p class="eyebrow">ECONOMIA</p>
+              <h3>Desalocação automática</h3>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label class="toggle-row standalone">
+              <span><strong>Desligar quando vazio</strong><small>Faz backup e desaloca a VM</small></span>
+              <input type="checkbox" name="idleEnabled" checked>
+              <i></i>
+            </label>
+            <label class="field">
+              <span>Minutos sem jogadores</span>
+              <input type="number" name="idleMinutes" min="10" max="240" value="30">
+            </label>
+          </div>
+        </form>
+      </section>
+
+      <section class="page" id="page-console">
+        <article class="panel console-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">RCON LOCAL VIA AZURE</p>
+              <h3>Console do servidor</h3>
+            </div>
+          </div>
+          <div class="console-output" id="console-output" aria-live="polite">
+            <p><span class="console-time">sistema</span> Use comandos sem a barra inicial.</p>
+            <p><span class="console-time">exemplo</span> list, say Olá, weather clear</p>
+          </div>
+          <form class="console-form" id="console-form">
+            <span>&gt;</span>
+            <input type="text" id="console-command" maxlength="200" placeholder="Digite um comando..." autocomplete="off">
+            <button class="primary-button" type="submit">Executar</button>
+          </form>
+        </article>
+      </section>
+
+      <section class="page" id="page-backups">
+        <div class="content-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">SEGURANÇA</p>
+                <h3>Backup manual</h3>
+              </div>
+            </div>
+            <p>Salva o mundo e cria um arquivo compactado em <code>/opt/minecraft/backups</code>.</p>
+            <button class="primary-button action-button" data-action="backup">Criar backup agora</button>
+          </article>
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">MANUTENÇÃO</p>
+                <h3>Atualizar componentes</h3>
+              </div>
+            </div>
+            <p>Atualiza a build do Paper 26.1.2 e os plugins gerenciados após criar um backup.</p>
+            <button class="secondary-button action-button" data-action="update">Atualizar servidor</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="page-access">
+        <article class="panel access-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">GITHUB</p>
+              <h3>Acesso ao painel</h3>
+            </div>
+          </div>
+          <p>As ações exigem um token GitHub com acesso somente a este repositório. O token fica na sessão deste navegador e não é enviado ao GitHub Pages.</p>
+          <dl class="details-list">
+            <div><dt>Repositório</dt><dd id="repo-detail">Não configurado</dd></div>
+            <div><dt>Usuário conectado</dt><dd id="user-detail">Nenhum</dd></div>
+            <div><dt>Workflow</dt><dd>server-control.yml</dd></div>
+            <div><dt>Azure</dt><dd>OIDC, sem senha armazenada</dd></div>
+          </dl>
+          <div class="button-row">
+            <button class="primary-button" id="access-connect-button">Configurar acesso</button>
+            <button class="secondary-button hidden" id="disconnect-button">Desconectar</button>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="modal" id="auth-modal">
+    <form method="dialog" id="auth-form">
+      <div class="modal-heading">
+        <div>
+          <p class="eyebrow">ACESSO ADMINISTRATIVO</p>
+          <h2>Conectar ao GitHub</h2>
+        </div>
+        <button class="close-button" value="cancel" aria-label="Fechar">×</button>
+      </div>
+      <p>Use um token fine-grained limitado a este repositório, com <strong>Actions: read/write</strong> e <strong>Contents: read</strong>.</p>
+      <label class="field">
+        <span>Proprietário do repositório</span>
+        <input type="text" name="owner" required placeholder="seu-usuario">
+      </label>
+      <label class="field">
+        <span>Nome do repositório</span>
+        <input type="text" name="repo" required value="minecraft-azure-panel">
+      </label>
+      <label class="field">
+        <span>Token GitHub</span>
+        <input type="password" name="token" required autocomplete="off" placeholder="github_pat_...">
+        <small>Salvo apenas em sessionStorage; será apagado ao fechar a sessão do navegador.</small>
+      </label>
+      <div class="modal-actions">
+        <button class="secondary-button" value="cancel">Cancelar</button>
+        <button class="primary-button" value="default">Conectar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal confirm-modal" id="confirm-modal">
+    <form method="dialog">
+      <div class="modal-heading">
+        <h2 id="confirm-title">Confirmar ação</h2>
+        <button class="close-button" value="cancel" aria-label="Fechar">×</button>
+      </div>
+      <p id="confirm-message"></p>
+      <div class="modal-actions">
+        <button class="secondary-button" value="cancel">Cancelar</button>
+        <button class="danger-button" value="confirm">Confirmar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "requestId": "",
+  "updatedAt": null,
+  "operation": "none",
+  "success": true,
+  "message": "Painel publicado. Conecte o GitHub e atualize o status.",
+  "vm": {
+    "state": "unknown",
+    "publicIp": "4.228.64.209"
+  },
+  "server": {
+    "service": "unknown",
+    "playersOnline": 0,
+    "playersMax": 20,
+    "plugins": []
+  },
+  "settings": {
+    "motd": "Mine-Etec - Java e Bedrock",
+    "gamemode": "survival",
+    "difficulty": "normal",
+    "maxPlayers": 20,
+    "spawnProtection": 16,
+    "viewDistance": 16,
+    "simulationDistance": 6,
+    "pvp": true,
+    "commandBlocks": false,
+    "whitelist": false,
+    "onlineMode": false,
+    "idleEnabled": true,
+    "idleMinutes": 30
+  }
+}
